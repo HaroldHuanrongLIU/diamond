@@ -44,6 +44,65 @@ And press `m` to take control (the policy is playing by default)!
 
 **Warning**: Atari ROMs will be downloaded with the dependencies, which means that you acknowledge that you have the license to use them.
 
+## SurgWMBench Adaptation
+
+This clone also contains a PyTorch 2.x SurgWMBench extension for adapting DIAMOND-style world modeling to:
+
+`SurgWMBench: A Dataset and World-Model Benchmark for Surgical Instrument Motion Planning`
+
+The extension lives under `diamond_surgwmbench/` and is intentionally separate from the original Atari-focused `src/` code. The current implemented first pass includes:
+
+- SurgWMBench clip, frame, and raw-video data loaders
+- sparse human-anchor, dense pseudo-coordinate, transition-pair, and window sampling modes
+- collate functions for sparse anchors, dense variable-length clips, transition pairs, windows, and frame autoencoding
+- sparse/dense trajectory metrics
+- toy dataset generation and loader validation tools
+- pytest coverage for the data foundation
+
+Training scripts, diffusion world-model adaptation, policy rollout, and planner code are not implemented yet in this branch.
+
+Expected local dataset root in this workspace:
+
+```bash
+/mnt/hdd1/neurips2026_dataset_track/SurgWMBench
+```
+
+Validate the transferred dataset:
+
+```bash
+python -m tools.validate_surgwmbench_loader \
+  --dataset-root /mnt/hdd1/neurips2026_dataset_track/SurgWMBench \
+  --manifest manifests/train.jsonl \
+  --interpolation-method linear \
+  --check-files \
+  --num-samples 8
+```
+
+Run SurgWMBench data tests:
+
+```bash
+pytest -q -p no:cacheprovider \
+  tests/test_surgwmbench_dataset.py \
+  tests/test_collate.py \
+  tests/test_metrics.py \
+  tests/test_validate_surgwmbench_loader.py
+```
+
+Generate a toy SurgWMBench dataset for local smoke checks:
+
+```bash
+python -m tools.make_toy_surgwmbench \
+  --output /tmp/SurgWMBench \
+  --num-clips 2
+```
+
+Important dataset rules:
+
+- Use official manifests only: `manifests/train.jsonl`, `val.jsonl`, `test.jsonl`, and `all.jsonl`.
+- Sparse 20-anchor human labels are the primary benchmark target.
+- Dense interpolation coordinates are auxiliary pseudo labels and must not be reported as human ground truth.
+- Do not create random splits, infer difficulty from paths, clip coordinates silently, or modify SurgWMBench annotations.
+
 ## CSGO
 
 
@@ -61,6 +120,7 @@ python src/play.py
 ## Quick Links
 
 - [Try our playable diffusion world models](#try)
+- [SurgWMBench Adaptation](#surgwmbench-adaptation)
 - [Launch a training run](#launch)
 - [Configuration](#configuration)
 - [Visualization](#visualization)
